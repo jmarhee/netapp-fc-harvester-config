@@ -1,0 +1,41 @@
+# kubectl apply -f 02-multipath.yaml
+# Verification: CloudInit fc-multipath. Wait until each node's Present is True,
+# reboot one node at a time (maintenance mode, reboot, disable maintenance).
+# On each node, multipathd must be active. Empty `multipath -ll` is expected until completion.
+# https://documentation.suse.com/cloudnative/virtualization/v1.5/en/installation-setup/config/cloudinitcrd.html
+# https://docs.netapp.com/us-en/trident-2506/trident-use/worker-node-prep.html
+apiVersion: node.harvesterhci.io/v1beta1
+kind: CloudInit
+metadata:
+  name: fc-multipath
+spec:
+  matchSelector:
+    harvesterhci.io/managed: "true"
+  filename: 99_fc_multipath.yaml
+  contents: |
+    stages:
+      network:
+        - name: "Write multipath.conf"
+          files:
+            - path: /etc/multipath.conf
+              permissions: 0644
+              content: |
+                defaults {
+                    user_friendly_names yes
+                    find_multipaths no
+                }
+                blacklist {
+                    wwid ".*"
+                }
+                blacklist_exceptions {
+                    device {
+                        vendor "NETAPP"
+                        product "LUN"
+                    }
+                }
+        - name: "Start multipathd"
+          systemctl:
+            enable:
+              - multipathd
+            start:
+              - multipathd

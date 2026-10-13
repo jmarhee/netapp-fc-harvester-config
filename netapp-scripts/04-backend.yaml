@@ -1,0 +1,31 @@
+# Fill SVM_NAME and MANAGEMENT_LIF from the zoning after 01.
+# Fill SVM_ADMIN_USER and SVM_ADMIN_PASSWORD. Do not commit the filled file.
+# kubectl apply -f 04-backend.yaml
+# Output: kubectl get tridentbackendconfig -n trident ontap-fcp-backend
+# PHASE Bound, then apply 05-storageclass.yaml.
+# https://docs.netapp.com/us-en/trident-2506/trident-use/ontap-san-examples.html
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ontap-fcp-backend-secret
+  namespace: trident
+type: Opaque
+stringData:
+  username: SVM_ADMIN_USER
+  password: SVM_ADMIN_PASSWORD
+---
+apiVersion: trident.netapp.io/v1
+kind: TridentBackendConfig
+metadata:
+  name: ontap-fcp-backend
+  namespace: trident
+spec:
+  version: 1
+  backendName: fcp-backend
+  storageDriverName: ontap-san
+  managementLIF: MANAGEMENT_LIF
+  svm: SVM_NAME
+  sanType: fcp
+  useREST: true
+  credentials:
+    name: ontap-fcp-backend-secret

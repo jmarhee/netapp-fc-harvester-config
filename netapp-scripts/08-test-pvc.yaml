@@ -1,0 +1,16 @@
+# kubectl apply -f 08-test-pvc.yaml
+# A test VM uses StorageClass netapp-fcp and volume mode Block.
+# https://documentation.suse.com/cloudnative/virtualization/v1.5/en/storage/csidriver.html
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: netapp-fcp-test
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Block
+  storageClassName: netapp-fcp
+  resources:
+    requests:
+      storage: 10Gi
