@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
-# Add csi.trident.netapp.io to csi-driver-config. Uses kubectl only.
-# Reads the current value and keeps a PowerMax entry when that key is already
-# present. Writes the Longhorn backup class and netapp-fcp-snapclass from 05.
-# Any other provisioner key in the current value is dropped.
-# Output: the JSON written to the setting. It must list csi.trident.netapp.io,
-# then apply 08-test-pvc.yaml.
+# Add csi.trident.netapp.io to csi-driver-config..
 # https://documentation.suse.com/cloudnative/virtualization/v1.5/en/storage/csidriver.html
 set -euo pipefail
 
@@ -22,4 +17,3 @@ value: |-
 EOF
 
 echo "$value"
-echo "csi.trident.netapp.io is registered. Apply 08-test-pvc.yaml."
