@@ -4,6 +4,8 @@
 # https://harvesterhci.io/kb/install_netapp_trident_csi/
 set -euo pipefail
 
+export KUBECONFIG="${KUBECONFIG:-/etc/rancher/rke2/rke2.yaml}"
+
 current=$(kubectl get settings.harvesterhci.io csi-driver-config -o jsonpath='{.value}')
 
 value=$(CURRENT="$current" python3 - <<'PY'
