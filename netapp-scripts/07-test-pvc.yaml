@@ -1,0 +1,17 @@
+# kubectl apply -f 07-test-pvc.yaml
+# Provisioning check only. The procedure is done when a VM root disk on
+# netapp-fc boots, live-migrates, and snapshots.
+# https://harvesterhci.io/kb/install_netapp_trident_csi/
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: netapp-fc-test
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Block
+  storageClassName: netapp-fc
+  resources:
+    requests:
+      storage: 10Gi

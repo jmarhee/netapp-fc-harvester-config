@@ -1,31 +1,27 @@
-# Fill SVM_NAME and MANAGEMENT_LIF from the zoning after 01.
-# Fill SVM_ADMIN_USER and SVM_ADMIN_PASSWORD. Do not commit the filled file.
+# Create the Secret first. Do not commit the password.
+# kubectl -n trident create secret generic netapp-creds \
+#   --from-literal=username=<ontap user> \
+#   --from-literal=password='<ontap password>'
+#
+# managementLIF is the SVM management LIF. The account is SVM-scoped vsadmin
+# with http and ontapi enabled. Trident infers the SVM from that LIF.
+# Leave out svm, dataLIF, useREST, spaceReserve, snapshotReserve, and
+# limitAggregateUsage. Pin the protocol on the StorageClass with sanType.
+# https://blog.5glinux.com/posts/netapp-trident-harvester-yamls/
 # kubectl apply -f 04-backend.yaml
-# Output: kubectl get tridentbackendconfig -n trident ontap-fcp-backend
-# PHASE Bound, then apply 05-storageclass.yaml.
-# https://docs.netapp.com/us-en/trident-2506/trident-use/ontap-san-examples.html
-apiVersion: v1
-kind: Secret
-metadata:
-  name: ontap-fcp-backend-secret
-  namespace: trident
-type: Opaque
-stringData:
-  username: SVM_ADMIN_USER
-  password: SVM_ADMIN_PASSWORD
----
+# kubectl -n trident get tridentbackendconfig netapp-fc
+# PHASE Bound and STATUS Success, then apply 05-storageclass.yaml.
+# https://harvesterhci.io/kb/install_netapp_trident_csi/
 apiVersion: trident.netapp.io/v1
 kind: TridentBackendConfig
 metadata:
-  name: ontap-fcp-backend
+  name: netapp-fc
   namespace: trident
 spec:
   version: 1
-  backendName: fcp-backend
   storageDriverName: ontap-san
-  managementLIF: MANAGEMENT_LIF
-  svm: SVM_NAME
   sanType: fcp
-  useREST: true
+  backendName: netapp-fc
+  managementLIF: MANAGEMENT_LIF
   credentials:
-    name: ontap-fcp-backend-secret
+    name: netapp-creds

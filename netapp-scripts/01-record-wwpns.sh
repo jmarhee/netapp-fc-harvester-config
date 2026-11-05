@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 # Run on each node that will attach LUNs. Skip a witness.
-# Retrieve initiator WWPNs from Linux sysfs (fc_host port_name). Zone them to
-# the SVM FC LIF WWPNs. 
-# SVM name and management LIF are not in this output. Look them up on ONTAP
-# and put them in 04-backend.yaml.
-# https://docs.netapp.com/us-en/trident-2506/trident-use/worker-node-prep.html
+# Zone these WWPNs to the SVM FC LIF WWPNs, and confirm the initiators log in
+# before installing Trident.
+# https://harvesterhci.io/kb/install_netapp_trident_csi/
 set -euo pipefail
 
 shopt -s nullglob
@@ -19,4 +17,4 @@ for port in "${ports[@]}"; do
   host=$(basename "$(dirname "$port")")
   echo "$host $(cat "$port")"
 done
-echo "Zone these WWPNs to the SVM FC LIFs, then put SVM_NAME and MANAGEMENT_LIF in 04-backend.yaml."
+echo "Zone these WWPNs to the SVM FC LIFs. The backend uses the SVM management LIF, not the SVM name."

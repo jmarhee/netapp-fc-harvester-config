@@ -1,39 +1,50 @@
 # kubectl apply -f 02-multipath.yaml
-# Verification: CloudInit fc-multipath. Wait until each node's Present is True,
-# reboot one node at a time (maintenance mode, reboot, disable maintenance).
-# On each node, multipathd must be active. Empty `multipath -ll` is expected until completion.
-# https://documentation.suse.com/cloudnative/virtualization/v1.5/en/installation-setup/config/cloudinitcrd.html
-# https://docs.netapp.com/us-en/trident-2506/trident-use/worker-node-prep.html
+# On Harvester 1.7 this lands in /oem. Wait until Present is True, then one node
+# at a time: Enable Maintenance Mode, reboot, wait until Ready, Disable Maintenance Mode.
+# Do not start multipathd before 98-netapp.conf is in place.
+# Confirm: multipathd -k"show config" | grep -A6 '^blacklist {'
+# The blacklist must show vendor ".*" and product ".*".
+# multipath -ll must not list a local disk. It stays empty until a LUN is mapped.
+# https://harvesterhci.io/kb/install_netapp_trident_csi/
 apiVersion: node.harvesterhci.io/v1beta1
 kind: CloudInit
 metadata:
-  name: fc-multipath
+  name: netapp-multipathd
 spec:
-  matchSelector:
-    harvesterhci.io/managed: "true"
-  filename: 99_fc_multipath.yaml
+  matchSelector: {}
+  filename: 98_netapp_multipathd.yaml
   contents: |
+    name: "enable multipathd for NetApp Trident iSCSI/FC (NETAPP LUNs only)"
     stages:
-      network:
-        - name: "Write multipath.conf"
-          files:
-            - path: /etc/multipath.conf
+      initramfs:
+        - files:
+            - path: /etc/multipath/conf.d/98-netapp.conf
               permissions: 0644
+              owner: 0
+              group: 0
               content: |
                 defaults {
                     user_friendly_names yes
                     find_multipaths no
+                    # lets libmpathpersist (qemu-pr-helper) track SCSI-3 PR keys across paths, for shared disks (e.g. WSFC)
+                    reservation_key file
+                    # don't create kpartx maps for partitions that guests create on the LUNs
+                    skip_kpartx yes
                 }
                 blacklist {
-                    wwid ".*"
+                    device {
+                        vendor ".*"
+                        product ".*"
+                    }
                 }
                 blacklist_exceptions {
                     device {
                         vendor "NETAPP"
-                        product "LUN"
+                        product "LUN.*"
                     }
                 }
-        - name: "Start multipathd"
+      network:
+        - name: "enable and start multipathd"
           systemctl:
             enable:
               - multipathd

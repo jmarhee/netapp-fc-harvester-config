@@ -1,22 +1,25 @@
 # kubectl apply -f 05-storageclass.yaml
-# Output: StorageClass netapp-fcp and VolumeSnapshotClass netapp-fcp-snapclass.
-# Both must exist, then run 06-storageprofile.sh. 07 registers netapp-fcp-snapclass.
-# https://docs.netapp.com/us-en/trident-2506/trident-use/ontap-san-examples.html
-# https://documentation.suse.com/cloudnative/virtualization/v1.5/en/storage/csidriver.html
+# StorageClass netapp-fc is pinned to Fibre Channel with sanType: fcp.
+# VolumeSnapshotClass trident-snapshotclass is what csi-driver-config records.
+# Do not patch the StorageProfile. CDI fills status for csi.trident.netapp.io.
+# Confirm: kubectl get storageprofile netapp-fc -o yaml
+# https://harvesterhci.io/kb/install_netapp_trident_csi/
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: netapp-fcp
+  name: netapp-fc
 provisioner: csi.trident.netapp.io
-reclaimPolicy: Delete
-allowVolumeExpansion: true
-volumeBindingMode: Immediate
 parameters:
-  backendType: ontap-san
+  backendType: "ontap-san"
+  sanType: "fcp"
+  fsType: "ext4"
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+allowVolumeExpansion: true
 ---
 apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshotClass
 metadata:
-  name: netapp-fcp-snapclass
+  name: trident-snapshotclass
 driver: csi.trident.netapp.io
 deletionPolicy: Delete
